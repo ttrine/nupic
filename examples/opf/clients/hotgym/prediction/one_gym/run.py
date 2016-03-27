@@ -6,15 +6,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -29,7 +29,9 @@ import csv
 import datetime
 
 from nupic.data.inference_shifter import InferenceShifter
+from nupic.frameworks.opf.metrics import MetricSpec
 from nupic.frameworks.opf.modelfactory import ModelFactory
+from nupic.frameworks.opf.predictionmetricsmanager import MetricsManager
 
 import nupic_output
 
@@ -42,12 +44,26 @@ DESCRIPTION = (
   "NOTE: You must run ./swarm.py before this, because model parameters\n"
   "are required to run NuPIC.\n"
 )
-GYM_NAME = "rec-center-hourly"
+GYM_NAME = "rec-center-hourly"  # or use "rec-center-every-15m-large"
 DATA_DIR = "."
 MODEL_PARAMS_DIR = "./model_params"
 # '7/2/10 0:00'
 DATE_FORMAT = "%m/%d/%y %H:%M"
 
+_METRIC_SPECS = (
+    MetricSpec(field='kw_energy_consumption', metric='multiStep',
+               inferenceElement='multiStepBestPredictions',
+               params={'errorMetric': 'aae', 'window': 1000, 'steps': 1}),
+    MetricSpec(field='kw_energy_consumption', metric='trivial',
+               inferenceElement='prediction',
+               params={'errorMetric': 'aae', 'window': 1000, 'steps': 1}),
+    MetricSpec(field='kw_energy_consumption', metric='multiStep',
+               inferenceElement='multiStepBestPredictions',
+               params={'errorMetric': 'altMAPE', 'window': 1000, 'steps': 1}),
+    MetricSpec(field='kw_energy_consumption', metric='trivial',
+               inferenceElement='prediction',
+               params={'errorMetric': 'altMAPE', 'window': 1000, 'steps': 1}),
+)
 
 def createModel(modelParams):
   model = ModelFactory.create(modelParams)
@@ -84,17 +100,26 @@ def runIoThroughNupic(inputData, model, gymName, plot):
   else:
     output = nupic_output.NuPICFileOutput([gymName])
 
+  metricsManager = MetricsManager(_METRIC_SPECS, model.getFieldInfo(),
+                                  model.getInferenceType())
+
   counter = 0
   for row in csvReader:
     counter += 1
-    if (counter % 100 == 0):
-      print "Read %i lines..." % counter
     timestamp = datetime.datetime.strptime(row[0], DATE_FORMAT)
     consumption = float(row[1])
     result = model.run({
       "timestamp": timestamp,
       "kw_energy_consumption": consumption
     })
+    result.metrics = metricsManager.update(result)
+
+    if counter % 100 == 0:
+      print "Read %i lines..." % counter
+      print ("After %i records, 1-step altMAPE=%f" % (counter,
+              result.metrics["multiStepBestPredictions:multiStep:"
+                             "errorMetric='altMAPE':steps=1:window=1000:"
+                             "field=kw_energy_consumption"]))
 
     if plot:
       result = shifter.shift(result)

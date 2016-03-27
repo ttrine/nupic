@@ -6,15 +6,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -33,7 +33,7 @@ TP10X2 - the C++ optimized temporal pooler (TP)
 import numpy
 import pyaudio
 import matplotlib.pyplot as plt
-from nupic.encoders.bitmaparray import BitmapArrayEncoder
+from nupic.encoders.sparse_pass_through_encoder import SparsePassThroughEncoder
 from nupic.research.TP10X2 import TP10X2 as TP
 
 
@@ -128,7 +128,7 @@ class AudioStream:
      1st arg: the total bits in input
      2nd arg: the number of bits used to encode each input bit
     """
-    self.e = BitmapArrayEncoder(self.numCols, 1)
+    self.e = SparsePassThroughEncoder(self.numCols, 1)
 
     """
     Sampling details
@@ -243,7 +243,7 @@ class AudioStream:
     Get the indices of the strongest frequencies (the top 'numInput')
     Scale the indices so that the frequencies fit to within numCols
     Pick out the unique indices (we've reduced the mapping, so we likely have multiples)
-    Encode those indices into an SDR via the BitmapArrayEncoder
+    Encode those indices into an SDR via the SparsePassThroughEncoder
     Cast the SDR as a float for the TP
     """
     ys = self.fft(self.audio, self.highpass, self.lowpass)
@@ -295,4 +295,3 @@ class AudioStream:
 
 
 audiostream = AudioStream()
-  

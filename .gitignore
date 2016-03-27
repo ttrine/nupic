@@ -1,28 +1,32 @@
 .metadata
-.idea
 Trunk.iml
 *.pyc
 *.class
-*.vcproj
 *.manifest
 *.cache
-*.project
-*.pydevproject
 trunk.sln
 *.m4
 test.out
 *~
 *.DS_Store
 *.swp
+*.coverage*
+
+# build
+build/
 
 # personalized nupic configuration file
 .nupic_config
 
 # IDE project files
 nbproject/
+*.vcproj
+*.project
+*.pydevproject
+.idea
 
-# swarming output files
-data/
+# Wheels
+wheelhouse/
 
 # output from integration tests
 inference/
@@ -30,6 +34,7 @@ savedmodels/
 /*.please_wait
 /auto_specials*.csv
 /weighted_mean*.csv
+/agg_gap_hours_24*.csv
 /test*.txt
 /test*.pkl
 
@@ -39,9 +44,6 @@ savedmodels/
 html/
 
 Servers/
-
-# Build files
-build/
 
 conf/default/nupic-site.xml
 
@@ -57,5 +59,12 @@ conf/default/nupic-site.xml
 /examples/prediction/experiments/hotgym/base/report.txt
 /examples/prediction/experiments/hotgym/base/results.pkl
 
-# nupic.core repo is located under $NUPIC/nta/
-nta
+# nupic.core repo is located under $NUPIC/extensions/core/
+extensions/core/
+experimental/
+
+# Pip stuff
+dist/
+nupic.egg-info/
+nupic/*py_region.*
+temp/

@@ -5,15 +5,15 @@
 # following terms and conditions apply:
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU Affero Public License version 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-# See the GNU General Public License for more details.
+# See the GNU Affero Public License for more details.
 #
-# You should have received a copy of the GNU General Public License
+# You should have received a copy of the GNU Affero Public License
 # along with this program.  If not, see http://www.gnu.org/licenses.
 #
 # http://numenta.org/licenses/
@@ -28,8 +28,7 @@ from nupic.encoders import (LogEncoder,
                                                   MultiEncoder, 
                                                   CategoryEncoder, 
                                                   ScalarEncoder,
-                                                  SDRCategoryEncoder,
-                                                  SDRRandomEncoder)
+                                                  SDRCategoryEncoder)
 #from nupic.data import TextFileSource
 from nupic.data.file_record_stream import FileRecordStream
 from nupic.frameworks.prediction.callbacks import (printSPCoincidences,
@@ -76,7 +75,7 @@ config = dict(
   encodingFieldWidthA = 50,
   encodingOnBitsA = 21,
 
-  encodingFieldStyleB = 'sdr',   # contiguous, sdr, zero
+  encodingFieldStyleB = 'sdr',   # contiguous, sdr
   encodingFieldWidthB = 50,     # 15, None means set same as A
   encodingOnBitsB = 23,          # 3, None means set same as A
   )
@@ -231,9 +230,6 @@ def getDescription(datasets):
     encoder.addEncoder('fieldB', ScalarEncoder(w=config['encodingOnBitsB'], 
                       n=config['encodingFieldWidthB'], minval=0, 
                       maxval=config['numBValues'], periodic=True, name='fieldB'))
-  elif config['encodingFieldStyleB'] == 'zero':
-    encoder.addEncoder('fieldB', SDRRandomEncoder(w=0, n=config['encodingFieldWidthB'], 
-                      name='fieldB'))
   elif config['encodingFieldStyleB'] == 'sdr':
     encoder.addEncoder('fieldB', SDRCategoryEncoder(w=config['encodingOnBitsB'], 
                       n=config['encodingFieldWidthB'], 
@@ -250,14 +246,11 @@ def getDescription(datasets):
   # ------------------------------------------------------------------
   # Node params
   # The inputs are long, horizontal vectors
-  inputShape = (1, encoder.getWidth())
+  inputDimensions = (1, encoder.getWidth())
 
   # Layout the coincidences vertically stacked on top of each other, each
   # looking at the entire input field. 
-  coincidencesShape = (config['spCoincCount'], 1)
-  inputBorder = inputShape[1]/2
-  if inputBorder*2 >= inputShape[1]:
-    inputBorder -= 1
+  columnDimensions = (config['spCoincCount'], 1)
 
   sensorParams = dict(
     # encoder/datasource are not parameters so don't include here
@@ -265,15 +258,14 @@ def getDescription(datasets):
   )
 
   CLAParams = dict(
-    inputShape = inputShape,
-    inputBorder = inputBorder,
-    coincidencesShape = coincidencesShape,
-    coincInputRadius = inputShape[1]/2,
-    coincInputPoolPct = 1.0,
+    inputDimensions = inputDimensions,
+    columnDimensions = columnDimensions,
+    potentialRadius = inputDimensions[1]/2,
+    potentialPct = 1.0,
     gaussianDist = 0,
     commonDistributions = 0,    # should be False if possibly not training
     localAreaDensity = -1, #0.05, 
-    numActivePerInhArea = config['spNumActivePerInhArea'],
+    numActiveColumnsPerInhArea = config['spNumActivePerInhArea'],
     dutyCyclePeriod = 1000,
     stimulusThreshold = 1,
     synPermInactiveDec = config['spSynPermInactiveDec'],
